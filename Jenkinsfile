@@ -67,7 +67,7 @@ pipeline {
                     // Jenkins sees them at /workspace (mounted volume)
                     sh '''
                         echo "MATLAB build script location:"
-                        ls -l /workspace/build_script.m
+                        ls -l /workspace/build_script_REAL_TEST.m
                         echo "Note: MATLAB must be run manually on Windows host"
                         echo "Or setup Jenkins Windows agent"
                     '''
@@ -92,7 +92,7 @@ pipeline {
                             ls -l /workspace/AEB_Model_ert_rtw
                         else
                             echo "WARNING: No generated code found"
-                            echo "Run build_script.m manually on Windows"
+                            echo "Run build_script_REAL_TEST.m manually on Windows"
                         fi
                     '''
                 }
