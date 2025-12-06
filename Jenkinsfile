@@ -433,14 +433,29 @@ pipeline {
             ''', allowEmptyArchive: true
             
             // Publish test results (if available)
-            // junit 'test_results/**/*.xml'  // Uncomment when XML results available
-            
-            // Publish HTML reports (if available)
-            // publishHTML([
-            //     reportDir: 'test_results/coverage_report',
-            //     reportFiles: 'coverage.html',
-            //     reportName: 'Code Coverage Report'
-            // ])
+            script {
+                if (fileExists('test_results')) {
+                    echo 'Publishing test reports...'
+                    
+                    // Publish JUnit test results (XML format)
+                    // Note: MATLAB Test Framework can export to JUnit XML format
+                    junit testResults: 'test_results/**/*.xml', allowEmptyResults: true
+                    
+                    // Publish HTML Coverage Report
+                    publishHTML([
+                        reportDir: 'test_results/coverage_report',
+                        reportFiles: 'coverage.html',
+                        reportName: 'Code Coverage Report',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true,
+                        allowMissing: true
+                    ])
+                    
+                    echo '[OK] Test reports published'
+                } else {
+                    echo '[INFO] No test_results directory found - reports will be available after running ci_test()'
+                }
+            }
             
             echo '[OK] Artifacts archived successfully'
         }
@@ -453,6 +468,12 @@ pipeline {
             echo 'Tests: PASSED'
             echo 'Artifacts: READY'
             echo ''
+            echo 'Available Reports:'
+            echo '  - Build Artifacts: ${env.BUILD_URL}artifact/'
+            echo '  - Test Results: ${env.BUILD_URL}testReport/'
+            echo '  - Code Coverage: ${env.BUILD_URL}Code_Coverage_Report/'
+            echo '  - Console Output: ${env.BUILD_URL}console'
+            echo ''
             echo 'Next steps:'
             echo '  - Review artifacts in Jenkins workspace'
             echo '  - Deploy to target ECU (manual)'
@@ -461,11 +482,21 @@ pipeline {
             echo 'For automated deployment, see README.md'
             echo '=================================================='
             
-            // Email notification (optional)
+            // Email notification with report links
             // emailext(
-            //     subject: " Jenkins Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-            //     body: "Build completed successfully.\n\nView details: ${env.BUILD_URL}",
-            //     to: "${NOTIFY_EMAIL}"
+            //     subject: "[SUCCESS] Jenkins Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            //     body: """Build completed successfully!
+            //     
+            //     Build Details: ${env.BUILD_URL}
+            //     
+            //     Reports:
+            //     - Test Results: ${env.BUILD_URL}testReport/
+            //     - Code Coverage: ${env.BUILD_URL}Code_Coverage_Report/
+            //     - Artifacts: ${env.BUILD_URL}artifact/
+            //     
+            //     Next: Review and deploy to target ECU
+            //     """,
+            //     to: "team@example.com"
             // )
         }
         

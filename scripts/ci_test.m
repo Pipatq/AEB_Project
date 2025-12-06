@@ -56,12 +56,19 @@ function exitCode = ci_test()
             if ~isempty(unitTestSuite)
                 runner = matlab.unittest.TestRunner.withTextOutput;
                 
-                % Add coverage plugin
+                % Add JUnit XML plugin for Jenkins integration
+                import matlab.unittest.plugins.XMLPlugin
+                xmlFile = 'test_results/junit_results.xml';
+                runner.addPlugin(XMLPlugin.producingJUnitFormat(xmlFile));
+                fprintf('  - JUnit XML report will be saved to: %s\n', xmlFile);
+                
+                % Add coverage plugin with HTML report
                 coverageReport = matlab.unittest.plugins.codecoverage.CoverageReport(...
                     'test_results/coverage_report', 'MainFile', 'coverage.html');
                 plugin = matlab.unittest.plugins.CodeCoveragePlugin.forFolder(...
                     'models', 'Producing', coverageReport);
                 runner.addPlugin(plugin);
+                fprintf('  - Coverage report will be saved to: test_results/coverage_report/\n');
                 
                 % Run tests
                 unitResults = runner.run(unitTestSuite);
