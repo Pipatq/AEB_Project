@@ -187,7 +187,7 @@ pipeline {
                             echo 1. Checking generated code structure...
                             
                             echo    Files in generated code:
-                            dir /b %MODEL_NAME%_ert_rtw/*.c %MODEL_NAME%_ert_rtw/*.h
+                            dir /b %MODEL_NAME%_ert_rtw\\*.c %MODEL_NAME%_ert_rtw\\*.h
                             
                             echo.
                             echo 2. Code generation successful
