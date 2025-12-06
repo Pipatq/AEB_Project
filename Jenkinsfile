@@ -406,16 +406,15 @@ pipeline {
                     // Publish JUnit test results (XML format)
                     junit testResults: 'test_results/**/*.xml', allowEmptyResults: true
                     
-                    // TODO: Install HTML Publisher Plugin to enable coverage reports
-                    // After installing plugin, uncomment below:
-                    // publishHTML([
-                    //     reportDir: 'test_results/coverage_report',
-                    //     reportFiles: 'coverage.html',
-                    //     reportName: 'Code Coverage Report',
-                    //     keepAll: true,
-                    //     alwaysLinkToLastBuild: true,
-                    //     allowMissing: true
-                    // ])
+                    // Publish HTML Coverage Report
+                    publishHTML([
+                        reportDir: 'test_results/coverage_report',
+                        reportFiles: 'coverage.html',
+                        reportName: 'Code Coverage Report',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true,
+                        allowMissing: true
+                    ])
                     
                     echo '[OK] Test reports published'
                 } else {
