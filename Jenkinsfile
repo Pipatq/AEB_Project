@@ -150,12 +150,20 @@ pipeline {
                     bat '''
                         echo.
                         echo Checking for generated code...
-                        if exist "%MODEL_NAME%_ert_rtw" (
-                            echo [OK] Generated code directory found
+                        
+                        REM ci_build.m copies to work/AEB_Model_ert_rtw
+                        if exist "work\\%MODEL_NAME%_ert_rtw" (
+                            echo [OK] Generated code found in work folder
+                            
+                            REM Copy to root for easier access
+                            if not exist "%MODEL_NAME%_ert_rtw" (
+                                xcopy /E /I /Y "work\\%MODEL_NAME%_ert_rtw" "%MODEL_NAME%_ert_rtw"
+                            )
+                            
                             echo Files:
-                            dir %MODEL_NAME%_ert_rtw/*.c %MODEL_NAME%_ert_rtw/*.h
+                            dir %MODEL_NAME%_ert_rtw\\*.c %MODEL_NAME%_ert_rtw\\*.h
                         ) else (
-                            echo [WARNING] No generated code found
+                            echo [WARNING] No generated code found in work folder
                         )
                     '''
                 }
@@ -208,20 +216,20 @@ pipeline {
                         
                         if exist "%MODEL_NAME%_ert_rtw" (
                             echo [OK] Collecting generated C code...
-                            xcopy /E /I /Y %MODEL_NAME%_ert_rtw artifacts/%MODEL_NAME%_ert_rtw
+                            xcopy /E /I /Y %MODEL_NAME%_ert_rtw "artifacts\\%MODEL_NAME%_ert_rtw"
                             
-                            echo Generated files: > artifacts/file_manifest.txt
-                            dir %MODEL_NAME%_ert_rtw >> artifacts/file_manifest.txt
+                            echo Generated files: > "artifacts\\file_manifest.txt"
+                            dir %MODEL_NAME%_ert_rtw >> "artifacts\\file_manifest.txt"
                         )
                         
                         if exist "test_results" (
                             echo [OK] Collecting test results...
-                            xcopy /E /I /Y test_results artifacts/test_results
+                            xcopy /E /I /Y test_results "artifacts\\test_results"
                         )
                         
                         if exist "build.log" (
                             echo [OK] Collecting build log...
-                            copy build.log artifacts/
+                            copy build.log artifacts\\
                         )
                         
                         echo.
@@ -251,12 +259,12 @@ pipeline {
                             
                             echo Package: %package_name%
                             
-                            powershell -Command "Compress-Archive -Path '%MODEL_NAME%_ert_rtw/*' -DestinationPath '%package_name%' -Force"
+                            powershell -Command "Compress-Archive -Path '%MODEL_NAME%_ert_rtw\\*' -DestinationPath '%package_name%' -Force"
                             
                             if exist "%package_name%" (
                                 echo [OK] Package created successfully
-                                move %package_name% artifacts/
-                                dir artifacts/%package_name%
+                                move %package_name% artifacts\\
+                                dir "artifacts\\%package_name%"
                             ) else (
                                 echo [ERROR] Failed to create package
                                 exit /b 1
@@ -396,18 +404,18 @@ pipeline {
                     echo 'Publishing test reports...'
                     
                     // Publish JUnit test results (XML format)
-                    // Note: MATLAB Test Framework can export to JUnit XML format
                     junit testResults: 'test_results/**/*.xml', allowEmptyResults: true
                     
-                    // Publish HTML Coverage Report
-                    publishHTML([
-                        reportDir: 'test_results/coverage_report',
-                        reportFiles: 'coverage.html',
-                        reportName: 'Code Coverage Report',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true,
-                        allowMissing: true
-                    ])
+                    // TODO: Install HTML Publisher Plugin to enable coverage reports
+                    // After installing plugin, uncomment below:
+                    // publishHTML([
+                    //     reportDir: 'test_results/coverage_report',
+                    //     reportFiles: 'coverage.html',
+                    //     reportName: 'Code Coverage Report',
+                    //     keepAll: true,
+                    //     alwaysLinkToLastBuild: true,
+                    //     allowMissing: true
+                    // ])
                     
                     echo '[OK] Test reports published'
                 } else {
