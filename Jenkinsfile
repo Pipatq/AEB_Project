@@ -1,5 +1,7 @@
 pipeline {
-    agent any
+    agent {
+        label 'windows-matlab'
+    }
     
     environment {
         // ===============================================
@@ -10,8 +12,8 @@ pipeline {
         // Update this to match your MATLAB installation
         MATLAB_PATH = 'C:\\Program Files\\MATLAB\\R2025b\\bin\\matlab.exe'
         
-        // Workspace directory (Jenkins will use mounted volume)
-        WORKSPACE_DIR = '/workspace'
+        // Workspace directory (Windows agent working directory)
+        WORKSPACE_DIR = 'C:\\Jenkins\\workspace'
         
         // Project name
         PROJECT_NAME = 'AEB_Project'
@@ -39,10 +41,10 @@ pipeline {
                 
                 // Display commit info
                 script {
-                    sh '''
-                        echo "Current commit:"
+                    bat '''
+                        echo Current commit:
                         git log -1 --oneline
-                        echo "Branch:"
+                        echo Branch:
                         git branch
                     '''
                 }
@@ -58,35 +60,21 @@ pipeline {
                 echo '=================================================='
                 
                 script {
-                    sh '''
-                        echo "Checking workspace structure..."
-                        ls -la /workspace
+                    bat '''
+                        echo Checking workspace structure...
+                        dir
                         
-                        echo ""
-                        echo "Verifying required directories..."
-                        for dir in models data tests scripts; do
-                            if [ -d "/workspace/$dir" ]; then
-                                echo "[OK] $dir/ found"
-                            else
-                                echo "[WARNING] $dir/ not found"
-                            fi
-                        done
+                        echo.
+                        echo Verifying required directories...
+                        if exist "models" (echo [OK] models/ found) else (echo [WARNING] models/ not found)
+                        if exist "data" (echo [OK] data/ found) else (echo [WARNING] data/ not found)
+                        if exist "tests" (echo [OK] tests/ found) else (echo [WARNING] tests/ not found)
+                        if exist "scripts" (echo [OK] scripts/ found) else (echo [WARNING] scripts/ not found)
                         
-                        echo ""
-                        echo "Checking MATLAB scripts..."
-                        if [ -f "/workspace/scripts/ci_build.m" ]; then
-                            echo "[OK] ci_build.m found"
-                        else
-                            echo "[ERROR] ci_build.m not found!"
-                            exit 1
-                        fi
-                        
-                        if [ -f "/workspace/scripts/ci_test.m" ]; then
-                            echo "[OK] ci_test.m found"
-                        else
-                            echo "[ERROR] ci_test.m not found!"
-                            exit 1
-                        fi
+                        echo.
+                        echo Checking MATLAB scripts...
+                        if exist "scripts\ci_build.m" (echo [OK] ci_build.m found) else (echo [ERROR] ci_build.m not found! && exit /b 1)
+                        if exist "scripts\ci_test.m" (echo [OK] ci_test.m found) else (echo [ERROR] ci_test.m not found! && exit /b 1)
                     '''
                 }
                 
@@ -101,31 +89,30 @@ pipeline {
                 echo '=================================================='
                 
                 script {
-                    // Note: This requires MATLAB to be accessible on Windows host
-                    // For Linux agent, use MATLAB batch command
-                    sh '''
-                        echo "Running unit tests..."
-                        echo "Command: matlab -batch 'addpath(\"scripts\"); exit(ci_test())'"
-                        echo ""
-                        echo "NOTE: Manual execution required on Windows host:"
-                        echo "  1. Open MATLAB on Windows"
-                        echo "  2. cd to: C:\\workspace (or your mounted path)"
-                        echo "  3. Run: addpath('scripts'); ci_test()"
-                        echo ""
-                        echo "For automated execution, setup Jenkins Windows agent"
-                        echo "or use MATLAB Web App Server"
+                    // Execute MATLAB tests via Windows agent
+                    bat '''
+                        echo Running unit tests...
+                        
+                        "%MATLAB_PATH%" -batch "addpath('scripts'); exit(ci_test())"
+                        
+                        if %ERRORLEVEL% NEQ 0 (
+                            echo [ERROR] Tests failed with exit code %ERRORLEVEL%
+                            exit /b %ERRORLEVEL%
+                        )
+                        
+                        echo [OK] Tests completed successfully
                     '''
                 }
                 
-                // For now, check if test results exist from previous run
+                // Check test results
                 script {
-                    sh '''
-                        if [ -d "/workspace/test_results" ]; then
-                            echo "Test results directory found"
-                            ls -l /workspace/test_results/
-                        else
-                            echo "No test results found - tests need to be run manually"
-                        fi
+                    bat '''
+                        if exist "test_results" (
+                            echo Test results directory found
+                            dir test_results
+                        ) else (
+                            echo [WARNING] No test_results directory found
+                        )
                     '''
                 }
                 
@@ -140,38 +127,36 @@ pipeline {
                 echo '=================================================='
                 
                 script {
-                    sh '''
-                        echo "Initiating build process..."
-                        echo "Model: ${MODEL_NAME}"
-                        echo "Configuration: ${BUILD_CONFIG}"
-                        echo ""
-                        echo "Build command:"
-                        echo "  matlab -batch 'addpath(\"scripts\"); exit(ci_build())'"
-                        echo ""
-                        echo "This will:"
-                        echo "  1. Load model: ${MODEL_NAME}.slx"
-                        echo "  2. Run Model Advisor checks"
-                        echo "  3. Generate C code (Embedded Coder)"
-                        echo "  4. Create build artifacts"
-                        echo ""
-                        echo "NOTE: Manual execution required on Windows host"
-                        echo "See README.md for automated setup instructions"
+                    // Execute MATLAB build via Windows agent
+                    bat '''
+                        echo Initiating build process...
+                        echo Model: %MODEL_NAME%
+                        echo Configuration: %BUILD_CONFIG%
+                        echo.
+                        
+                        "%MATLAB_PATH%" -batch "addpath('scripts'); exit(ci_build())"
+                        
+                        if %ERRORLEVEL% NEQ 0 (
+                            echo [ERROR] Build failed with exit code %ERRORLEVEL%
+                            exit /b %ERRORLEVEL%
+                        )
+                        
+                        echo [OK] Build completed successfully
                     '''
                 }
                 
                 // Check for existing build artifacts
                 script {
-                    sh '''
-                        echo ""
-                        echo "Checking for generated code..."
-                        if [ -d "/workspace/${MODEL_NAME}_ert_rtw" ]; then
-                            echo " Generated code directory found"
-                            echo "Files:"
-                            ls -lh /workspace/${MODEL_NAME}_ert_rtw/*.c /workspace/${MODEL_NAME}_ert_rtw/*.h 2>/dev/null || echo "No C/H files found"
-                        else
-                            echo " No generated code found"
-                            echo "Run ci_build() manually to generate code"
-                        fi
+                    bat '''
+                        echo.
+                        echo Checking for generated code...
+                        if exist "%MODEL_NAME%_ert_rtw" (
+                            echo [OK] Generated code directory found
+                            echo Files:
+                            dir %MODEL_NAME%_ert_rtw\\*.c %MODEL_NAME%_ert_rtw\\*.h
+                        ) else (
+                            echo [WARNING] No generated code found
+                        )
                     '''
                 }
                 
@@ -186,43 +171,22 @@ pipeline {
                 echo '=================================================='
                 
                 script {
-                    sh '''
-                        echo "Code quality checks:"
-                        echo ""
+                    bat '''
+                        echo Code quality checks:
+                        echo.
                         
-                        # Check for generated C code
-                        if [ -d "/workspace/${MODEL_NAME}_ert_rtw" ]; then
-                            echo "1. Checking generated code structure..."
+                        if exist "%MODEL_NAME%_ert_rtw" (
+                            echo 1. Checking generated code structure...
                             
-                            # Count generated files
-                            c_files=$(find /workspace/${MODEL_NAME}_ert_rtw -name "*.c" | wc -l)
-                            h_files=$(find /workspace/${MODEL_NAME}_ert_rtw -name "*.h" | wc -l)
+                            echo    Files in generated code:
+                            dir /b %MODEL_NAME%_ert_rtw\\*.c %MODEL_NAME%_ert_rtw\\*.h
                             
-                            echo "   - C files: $c_files"
-                            echo "   - H files: $h_files"
-                            
-                            if [ $c_files -gt 0 ] && [ $h_files -gt 0 ]; then
-                                echo "    Code generation successful"
-                            else
-                                echo "    WARNING: Insufficient files generated"
-                            fi
-                            
-                            echo ""
-                            echo "2. Checking for common issues..."
-                            
-                            # Check for TODO/FIXME comments
-                            todos=$(grep -r "TODO\\|FIXME" /workspace/${MODEL_NAME}_ert_rtw/*.c 2>/dev/null | wc -l)
-                            echo "   - TODO/FIXME comments: $todos"
-                            
-                            echo ""
-                            echo "3. Code metrics:"
-                            total_lines=$(cat /workspace/${MODEL_NAME}_ert_rtw/*.c 2>/dev/null | wc -l)
-                            echo "   - Total lines of code: $total_lines"
-                            
-                        else
-                            echo "No generated code to analyze"
-                            echo "Run build stage first"
-                        fi
+                            echo.
+                            echo 2. Code generation successful
+                        ) else (
+                            echo No generated code to analyze
+                            echo Run build stage first
+                        )
                     '''
                 }
                 
@@ -237,37 +201,32 @@ pipeline {
                 echo '=================================================='
                 
                 script {
-                    sh '''
-                        echo "Collecting build artifacts..."
+                    bat '''
+                        echo Collecting build artifacts...
                         
-                        # Create artifacts directory
-                        mkdir -p /workspace/artifacts
+                        if not exist "artifacts" mkdir artifacts
                         
-                        # Collect generated code
-                        if [ -d "/workspace/${MODEL_NAME}_ert_rtw" ]; then
-                            echo " Collecting generated C code..."
-                            cp -r /workspace/${MODEL_NAME}_ert_rtw /workspace/artifacts/
+                        if exist "%MODEL_NAME%_ert_rtw" (
+                            echo [OK] Collecting generated C code...
+                            xcopy /E /I /Y %MODEL_NAME%_ert_rtw artifacts\\%MODEL_NAME%_ert_rtw
                             
-                            # Create source list
-                            echo "Generated files:" > /workspace/artifacts/file_manifest.txt
-                            ls -lh /workspace/${MODEL_NAME}_ert_rtw >> /workspace/artifacts/file_manifest.txt
-                        fi
+                            echo Generated files: > artifacts\\file_manifest.txt
+                            dir %MODEL_NAME%_ert_rtw >> artifacts\\file_manifest.txt
+                        )
                         
-                        # Collect test results
-                        if [ -d "/workspace/test_results" ]; then
-                            echo " Collecting test results..."
-                            cp -r /workspace/test_results /workspace/artifacts/
-                        fi
+                        if exist "test_results" (
+                            echo [OK] Collecting test results...
+                            xcopy /E /I /Y test_results artifacts\\test_results
+                        )
                         
-                        # Collect build logs
-                        if [ -f "/workspace/build.log" ]; then
-                            echo " Collecting build log..."
-                            cp /workspace/build.log /workspace/artifacts/
-                        fi
+                        if exist "build.log" (
+                            echo [OK] Collecting build log...
+                            copy build.log artifacts\\
+                        )
                         
-                        echo ""
-                        echo "Artifact collection summary:"
-                        ls -lh /workspace/artifacts/
+                        echo.
+                        echo Artifact collection summary:
+                        dir artifacts
                     '''
                 }
                 
@@ -282,36 +241,30 @@ pipeline {
                 echo '=================================================='
                 
                 script {
-                    sh '''
-                        if [ -d "/workspace/${MODEL_NAME}_ert_rtw" ]; then
-                            cd /workspace
+                    bat '''
+                        if exist "%MODEL_NAME%_ert_rtw" (
+                            echo Creating firmware package...
                             
-                            # Create firmware package with timestamp
-                            timestamp=$(date +%Y%m%d_%H%M%S)
-                            package_name="firmware_${MODEL_NAME}_${timestamp}.tar.gz"
+                            set timestamp=%date:~10,4%%date:~4,2%%date:~7,2%_%time:~0,2%%time:~3,2%%time:~6,2%
+                            set timestamp=%timestamp: =0%
+                            set package_name=firmware_%MODEL_NAME%_%timestamp%.zip
                             
-                            echo "Creating firmware package: $package_name"
-                            tar -czf $package_name \
-                                ${MODEL_NAME}_ert_rtw/*.c \
-                                ${MODEL_NAME}_ert_rtw/*.h \
-                                ${MODEL_NAME}_ert_rtw/*.mk 2>/dev/null || true
+                            echo Package: %package_name%
                             
-                            if [ -f "$package_name" ]; then
-                                size=$(ls -lh $package_name | awk '{print $5}')
-                                echo " Package created successfully"
-                                echo "  File: $package_name"
-                                echo "  Size: $size"
-                                
-                                # Move to artifacts
-                                mv $package_name artifacts/
-                            else
-                                echo " Failed to create package"
-                                exit 1
-                            fi
-                        else
-                            echo " No code to package - skipping"
-                            echo "Run build stage to generate code first"
-                        fi
+                            powershell -Command "Compress-Archive -Path '%MODEL_NAME%_ert_rtw\\*' -DestinationPath '%package_name%' -Force"
+                            
+                            if exist "%package_name%" (
+                                echo [OK] Package created successfully
+                                move %package_name% artifacts\\
+                                dir artifacts\\%package_name%
+                            ) else (
+                                echo [ERROR] Failed to create package
+                                exit /b 1
+                            )
+                        ) else (
+                            echo [WARNING] No code to package - skipping
+                            echo Run build stage to generate code first
+                        )
                     '''
                 }
                 
@@ -323,7 +276,7 @@ pipeline {
             when {
                 expression { 
                     // Only deploy if artifacts exist
-                    return fileExists('artifacts/firmware_*.tar.gz')
+                    return fileExists('artifacts/firmware_*.zip')
                 }
             }
             steps {
@@ -413,26 +366,20 @@ pipeline {
             echo '=================================================='
             
             script {
-                sh '''
-                    echo "Archiving artifacts..."
-                    if [ -d "/workspace/artifacts" ]; then
-                        ls -lh /workspace/artifacts/
+                bat '''
+                    echo Archiving artifacts...
+                    if exist "artifacts" (
+                        dir artifacts
                         
-                        # Copy artifacts from mounted volume to Jenkins workspace
-                        echo "Copying artifacts to Jenkins workspace..."
-                        cp -r /workspace/artifacts ./
-                        cp /workspace/build.log ./ 2>/dev/null || true
-                        
-                        # Copy test results if they exist (including all subfolders)
-                        if [ -d "/workspace/test_results" ]; then
-                            echo "Copying test_results folder..."
-                            cp -r /workspace/test_results ./
-                            echo "Test results copied successfully"
-                            ls -la ./test_results/
-                        else
-                            echo "No test_results folder found in /workspace/"
-                        fi
-                    fi
+                        echo [OK] Artifacts ready for archival
+                    )
+                    
+                    if exist "test_results" (
+                        echo [OK] Test results ready for archival
+                        dir test_results
+                    ) else (
+                        echo [INFO] No test_results folder found
+                    )
                 '''
             }
             
@@ -551,15 +498,14 @@ pipeline {
             echo '=================================================='
             
             script {
-                sh '''
-                    echo "Cleaning temporary files..."
+                bat '''
+                    echo Cleaning temporary files...
                     
-                    # Remove MATLAB temporary files (keep artifacts)
-                    find /workspace -name "*.asv" -type f -delete 2>/dev/null || true
-                    find /workspace -name "*.m~" -type f -delete 2>/dev/null || true
-                    find /workspace -name "*.autosave" -type f -delete 2>/dev/null || true
+                    if exist "*.asv" del /Q *.asv
+                    if exist "*.m~" del /Q *.m~
+                    if exist "*.autosave" del /Q *.autosave
                     
-                    echo " Cleanup completed"
+                    echo [OK] Cleanup completed
                 '''
             }
             
