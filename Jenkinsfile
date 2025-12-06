@@ -1,4 +1,4 @@
-pipeline {
+﻿pipeline {
     agent any
     
     environment {
@@ -25,7 +25,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '=================================================='
-                echo '   STAGE 1: Checkout Code from Repository'
+                echo '[OK] STAGE 1: Checkout Code from Repository'
                 echo '=================================================='
                 
                 // Clone from Git repository
@@ -47,14 +47,14 @@ pipeline {
                     '''
                 }
                 
-                echo '✓ Code checkout completed successfully'
+                echo '[OK] Code checkout completed successfully'
             }
         }
 
         stage('Verify Environment') {
             steps {
                 echo '=================================================='
-                echo '   STAGE 2: Verify Build Environment'
+                echo '[OK] STAGE 2: Verify Build Environment'
                 echo '=================================================='
                 
                 script {
@@ -66,38 +66,38 @@ pipeline {
                         echo "Verifying required directories..."
                         for dir in models data tests scripts; do
                             if [ -d "/workspace/$dir" ]; then
-                                echo "✓ $dir/ found"
+                                echo "[OK] $dir/ found"
                             else
-                                echo "✗ WARNING: $dir/ not found"
+                                echo "[WARNING] $dir/ not found"
                             fi
                         done
                         
                         echo ""
                         echo "Checking MATLAB scripts..."
                         if [ -f "/workspace/scripts/ci_build.m" ]; then
-                            echo "✓ ci_build.m found"
+                            echo "[OK] ci_build.m found"
                         else
-                            echo "✗ ERROR: ci_build.m not found!"
+                            echo "[ERROR] ci_build.m not found!"
                             exit 1
                         fi
                         
                         if [ -f "/workspace/scripts/ci_test.m" ]; then
-                            echo "✓ ci_test.m found"
+                            echo "[OK] ci_test.m found"
                         else
-                            echo "✗ ERROR: ci_test.m not found!"
+                            echo "[ERROR] ci_test.m not found!"
                             exit 1
                         fi
                     '''
                 }
                 
-                echo '✓ Environment verification completed'
+                echo '[OK] Environment verification completed'
             }
         }
 
         stage('Run Unit Tests') {
             steps {
                 echo '=================================================='
-                echo '   STAGE 3: Execute Unit Tests'
+                echo '[OK] STAGE 3: Execute Unit Tests'
                 echo '=================================================='
                 
                 script {
@@ -129,7 +129,7 @@ pipeline {
                     '''
                 }
                 
-                echo '⚠ Unit tests stage completed (manual verification required)'
+                echo '[OK] Unit tests stage completed (manual verification required)'
             }
         }
 
@@ -165,24 +165,24 @@ pipeline {
                         echo ""
                         echo "Checking for generated code..."
                         if [ -d "/workspace/${MODEL_NAME}_ert_rtw" ]; then
-                            echo "✓ Generated code directory found"
+                            echo " Generated code directory found"
                             echo "Files:"
                             ls -lh /workspace/${MODEL_NAME}_ert_rtw/*.c /workspace/${MODEL_NAME}_ert_rtw/*.h 2>/dev/null || echo "No C/H files found"
                         else
-                            echo "⚠ No generated code found"
+                            echo " No generated code found"
                             echo "Run ci_build() manually to generate code"
                         fi
                     '''
                 }
                 
-                echo '⚠ Build stage completed (manual verification required)'
+                echo '[OK] Build stage completed (manual verification required)'
             }
         }
 
         stage('Code Quality Check') {
             steps {
                 echo '=================================================='
-                echo '   STAGE 5: Code Quality & Standards Verification'
+                echo '[OK] STAGE 5: Code Quality & Standards Verification'
                 echo '=================================================='
                 
                 script {
@@ -202,9 +202,9 @@ pipeline {
                             echo "   - H files: $h_files"
                             
                             if [ $c_files -gt 0 ] && [ $h_files -gt 0 ]; then
-                                echo "   ✓ Code generation successful"
+                                echo "    Code generation successful"
                             else
-                                echo "   ✗ WARNING: Insufficient files generated"
+                                echo "    WARNING: Insufficient files generated"
                             fi
                             
                             echo ""
@@ -220,20 +220,20 @@ pipeline {
                             echo "   - Total lines of code: $total_lines"
                             
                         else
-                            echo "⚠ No generated code to analyze"
+                            echo "No generated code to analyze"
                             echo "Run build stage first"
                         fi
                     '''
                 }
                 
-                echo '✓ Code quality check completed'
+                echo '[OK] Code quality check completed'
             }
         }
 
         stage('Collect Artifacts') {
             steps {
                 echo '=================================================='
-                echo '   STAGE 6: Collect Build Artifacts'
+                echo '[OK] STAGE 6: Collect Build Artifacts'
                 echo '=================================================='
                 
                 script {
@@ -245,7 +245,7 @@ pipeline {
                         
                         # Collect generated code
                         if [ -d "/workspace/${MODEL_NAME}_ert_rtw" ]; then
-                            echo "✓ Collecting generated C code..."
+                            echo " Collecting generated C code..."
                             cp -r /workspace/${MODEL_NAME}_ert_rtw /workspace/artifacts/
                             
                             # Create source list
@@ -255,13 +255,13 @@ pipeline {
                         
                         # Collect test results
                         if [ -d "/workspace/test_results" ]; then
-                            echo "✓ Collecting test results..."
+                            echo " Collecting test results..."
                             cp -r /workspace/test_results /workspace/artifacts/
                         fi
                         
                         # Collect build logs
                         if [ -f "/workspace/build.log" ]; then
-                            echo "✓ Collecting build log..."
+                            echo " Collecting build log..."
                             cp /workspace/build.log /workspace/artifacts/
                         fi
                         
@@ -271,14 +271,14 @@ pipeline {
                     '''
                 }
                 
-                echo '✓ Artifacts collected successfully'
+                echo '[OK] Artifacts collected successfully'
             }
         }
         
         stage('Package Firmware') {
             steps {
                 echo '=================================================='
-                echo '   STAGE 7: Package Firmware Release'
+                echo '[OK] STAGE 7: Package Firmware Release'
                 echo '=================================================='
                 
                 script {
@@ -298,24 +298,24 @@ pipeline {
                             
                             if [ -f "$package_name" ]; then
                                 size=$(ls -lh $package_name | awk '{print $5}')
-                                echo "✓ Package created successfully"
+                                echo " Package created successfully"
                                 echo "  File: $package_name"
                                 echo "  Size: $size"
                                 
                                 # Move to artifacts
                                 mv $package_name artifacts/
                             else
-                                echo "✗ Failed to create package"
+                                echo " Failed to create package"
                                 exit 1
                             fi
                         else
-                            echo "⚠ No code to package - skipping"
+                            echo " No code to package - skipping"
                             echo "Run build stage to generate code first"
                         fi
                     '''
                 }
                 
-                echo '✓ Firmware packaging completed'
+                echo '[OK] Firmware packaging completed'
             }
         }
         
@@ -328,15 +328,15 @@ pipeline {
             }
             steps {
                 echo '=================================================='
-                echo '   STAGE 8: Deploy to Staging Environment (Mock)'
+                echo '[OK] STAGE 8: Deploy to Staging Environment (Mock)'
                 echo '=================================================='
                 
                 script {
-                    echo '📦 Continuous Deployment - Staging'
+                    echo '[OK] Continuous Deployment - Staging'
                     echo ''
                     echo 'This stage simulates deployment to staging ECU'
                     echo ''
-                    echo '🔄 Deployment steps (when implemented):'
+                    echo '[OK] Deployment steps (when implemented):'
                     echo '  1. Extract firmware package'
                     echo '  2. Validate firmware checksums'
                     echo '  3. Connect to staging ECU (CAN/Ethernet)'
@@ -348,12 +348,12 @@ pipeline {
                     // Simulate deployment process
                     sleep 2
                     
-                    echo '✓ Firmware deployment simulation completed'
-                    echo '✓ Staging ECU Status: READY'
-                    echo '✓ All systems nominal'
+                    echo '[OK] Firmware deployment simulation completed'
+                    echo '[OK] Staging ECU Status: READY'
+                    echo '[OK] All systems nominal'
                 }
                 
-                echo '⚠ Staging deployment completed (mock)'
+                echo '[OK] Staging deployment completed (mock)'
             }
         }
         
@@ -366,24 +366,24 @@ pipeline {
             }
             steps {
                 echo '=================================================='
-                echo '   STAGE 9: Deploy to Production ECU (Mock)'
+                echo '[OK] STAGE 9: Deploy to Production ECU (Mock)'
                 echo '=================================================='
                 
                 // Require manual approval for production
                 input message: 'Deploy to Production ECU?', ok: 'Deploy'
                 
                 script {
-                    echo '🚀 Continuous Deployment - PRODUCTION'
+                    echo '[OK] Continuous Deployment - PRODUCTION'
                     echo ''
-                    echo '⚠️  CRITICAL: Production deployment initiated'
+                    echo '️  CRITICAL: Production deployment initiated'
                     echo ''
-                    echo '📋 Pre-deployment checklist:'
-                    echo '  ✓ All tests passed'
-                    echo '  ✓ Code review completed'
-                    echo '  ✓ Staging validation successful'
-                    echo '  ✓ Manual approval received'
+                    echo '[OK] Pre-deployment checklist:'
+                    echo '[OK] All tests passed'
+                    echo '[OK] Code review completed'
+                    echo '[OK] Staging validation successful'
+                    echo '[OK] Manual approval received'
                     echo ''
-                    echo '🔄 Production deployment (when implemented):'
+                    echo '[OK] Production deployment (when implemented):'
                     echo '  1. Backup current ECU firmware'
                     echo '  2. Upload new firmware to production ECU'
                     echo '  3. Flash firmware'
@@ -395,13 +395,13 @@ pipeline {
                     // Simulate production deployment
                     sleep 3
                     
-                    echo '✓ Production deployment simulation completed'
-                    echo '✓ Production ECU Status: OPERATIONAL'
-                    echo '✓ Firmware version updated'
-                    echo '✓ System health: NOMINAL'
+                    echo '[OK] Production deployment simulation completed'
+                    echo '[OK] Production ECU Status: OPERATIONAL'
+                    echo '[OK] Firmware version updated'
+                    echo '[OK] System health: NOMINAL'
                 }
                 
-                echo '⚠ Production deployment completed (mock)'
+                echo '[OK] Production deployment completed (mock)'
             }
         }
     }
@@ -409,7 +409,7 @@ pipeline {
     post {
         always {
             echo '=================================================='
-            echo '   Pipeline Cleanup & Archiving'
+            echo '[OK] Pipeline Cleanup & Archiving'
             echo '=================================================='
             
             script {
@@ -442,12 +442,12 @@ pipeline {
             //     reportName: 'Code Coverage Report'
             // ])
             
-            echo '✓ Artifacts archived successfully'
+            echo '[OK] Artifacts archived successfully'
         }
         
         success {
             echo '=================================================='
-            echo '   ✓✓✓ PIPELINE EXECUTED SUCCESSFULLY! ✓✓✓'
+            echo '[OK] PIPELINE EXECUTED SUCCESSFULLY! '
             echo '=================================================='
             echo 'Build: SUCCESS'
             echo 'Tests: PASSED'
@@ -463,7 +463,7 @@ pipeline {
             
             // Email notification (optional)
             // emailext(
-            //     subject: "✓ Jenkins Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            //     subject: " Jenkins Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             //     body: "Build completed successfully.\n\nView details: ${env.BUILD_URL}",
             //     to: "${NOTIFY_EMAIL}"
             // )
@@ -471,7 +471,7 @@ pipeline {
         
         failure {
             echo '=================================================='
-            echo '   ✗✗✗ PIPELINE FAILED! ✗✗✗'
+            echo '[OK] PIPELINE FAILED!'
             echo '=================================================='
             echo 'Status: FAILURE'
             echo ''
@@ -487,7 +487,7 @@ pipeline {
             
             // Email notification (optional)
             // emailext(
-            //     subject: "✗ Jenkins Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            //     subject: " Jenkins Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             //     body: "Build failed. Please check logs.\n\nView details: ${env.BUILD_URL}",
             //     to: "${NOTIFY_EMAIL}"
             // )
@@ -495,7 +495,7 @@ pipeline {
         
         unstable {
             echo '=================================================='
-            echo '   ⚠ PIPELINE UNSTABLE'
+            echo '[OK] PIPELINE UNSTABLE'
             echo '=================================================='
             echo 'Status: UNSTABLE'
             echo 'Some tests may have failed or warnings detected'
@@ -505,7 +505,7 @@ pipeline {
         
         cleanup {
             echo '=================================================='
-            echo '   Cleanup Phase'
+            echo '[OK] Cleanup Phase'
             echo '=================================================='
             
             script {
@@ -517,11 +517,11 @@ pipeline {
                     find /workspace -name "*.m~" -type f -delete 2>/dev/null || true
                     find /workspace -name "*.autosave" -type f -delete 2>/dev/null || true
                     
-                    echo "✓ Cleanup completed"
+                    echo " Cleanup completed"
                 '''
             }
             
-            echo '✓ Pipeline cleanup finished'
+            echo '[OK] Pipeline cleanup finished'
         }
     }
 }

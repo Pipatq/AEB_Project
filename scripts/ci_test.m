@@ -100,9 +100,9 @@ function exitCode = ci_test()
                     
                     try
                         run(fullfile(systemTestDir, systemTestFiles(i).name));
-                        fprintf('      ✓ PASSED\n');
+                        fprintf('      [PASS]\n');
                     catch ME
-                        fprintf('      ✗ FAILED: %s\n', ME.message);
+                        fprintf('      [FAIL]: %s\n', ME.message);
                         exitCode = 1;
                     end
                 end
@@ -130,13 +130,14 @@ function exitCode = ci_test()
             fprintf('  - Simulation completed (%.2f sec simulated)\n', simOut.tout(end));
             
             % Basic validation - check for NaN/Inf in outputs
+            % This ensures numerical stability of the simulation
             hasError = false;
             if any(isnan(simOut.yout{1}.Values.Data(:))) || any(isinf(simOut.yout{1}.Values.Data(:)))
-                fprintf('  - ✗ ERROR: Output contains NaN or Inf values!\n');
+                fprintf('  - [ERROR] Output contains NaN or Inf values!\n');
                 hasError = true;
                 exitCode = 1;
             else
-                fprintf('  - ✓ Output validation passed\n');
+                fprintf('  - [OK] Output validation passed\n');
             end
             
             % Save simulation results
