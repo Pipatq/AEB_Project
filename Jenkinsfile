@@ -253,8 +253,9 @@ pipeline {
                         if exist "%MODEL_NAME%_ert_rtw" (
                             echo Creating firmware package...
                             
-                            set timestamp=%date:~10,4%%date:~4,2%%date:~7,2%_%time:~0,2%%time:~3,2%%time:~6,2%
-                            set timestamp=%timestamp: =0%
+                            REM Use simple timestamp format
+                            for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set datetime=%%I
+                            set timestamp=%datetime:~0,8%_%datetime:~8,6%
                             set package_name=firmware_%MODEL_NAME%_%timestamp%.zip
                             
                             echo Package: %package_name%
