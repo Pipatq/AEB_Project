@@ -110,8 +110,8 @@ pipeline {
                     sh '''
                         if [ -d "/workspace/AEB_Model_ert_rtw" ]; then
                             cd /workspace
-                            zip -r firmware_release.zip AEB_Model_ert_rtw/*.c AEB_Model_ert_rtw/*.h
-                            echo "Firmware package created"
+                            tar -czf firmware_release.tar.gz AEB_Model_ert_rtw/*.c AEB_Model_ert_rtw/*.h
+                            echo "Firmware package created: firmware_release.tar.gz"
                         else
                             echo "Skipping packaging - no artifacts found"
                         fi
@@ -121,6 +121,21 @@ pipeline {
         }
         
         stage('Mock Flashing (CD)') {
+            steps {
+                echo '=================================================='
+                echo '   STAGE 6: Mock ECU Flashing (Deployment)'
+                echo '=================================================='
+                
+                script {
+                    // Simulate flashing firmware to ECU
+                    echo 'Simulating firmware flash to target ECU...'
+                    sleep 2
+                    echo '✓ Firmware flashed successfully (Mock)'
+                    echo '✓ ECU Status: READY'
+                    echo '✓ Deployment completed!'
+                }
+            }
+        }
             steps {
                 echo '=================================================='
                 echo '   STAGE 6: Mock ECU Flashing (Deployment)'
@@ -147,7 +162,7 @@ pipeline {
             // Archive all important artifacts
             archiveArtifacts artifacts: '''
                 **/build.log,
-                **/firmware_release*.zip,
+                **/firmware_release*.tar.gz,
                 **/AEB_Model_ert_rtw/*.c,
                 **/AEB_Model_ert_rtw/*.h
             ''', allowEmptyArchive: true
