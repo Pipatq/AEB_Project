@@ -73,8 +73,8 @@ pipeline {
                         
                         echo.
                         echo Checking MATLAB scripts...
-                        if exist "scripts\ci_build.m" (echo [OK] ci_build.m found) else (echo [ERROR] ci_build.m not found! && exit /b 1)
-                        if exist "scripts\ci_test.m" (echo [OK] ci_test.m found) else (echo [ERROR] ci_test.m not found! && exit /b 1)
+                        if exist "scripts/ci_build.m" (echo [OK] ci_build.m found) else (echo [ERROR] ci_build.m not found! && exit /b 1)
+                        if exist "scripts/ci_test.m" (echo [OK] ci_test.m found) else (echo [ERROR] ci_test.m not found! && exit /b 1)
                     '''
                 }
                 
@@ -153,7 +153,7 @@ pipeline {
                         if exist "%MODEL_NAME%_ert_rtw" (
                             echo [OK] Generated code directory found
                             echo Files:
-                            dir %MODEL_NAME%_ert_rtw\\*.c %MODEL_NAME%_ert_rtw\\*.h
+                            dir %MODEL_NAME%_ert_rtw/*.c %MODEL_NAME%_ert_rtw/*.h
                         ) else (
                             echo [WARNING] No generated code found
                         )
@@ -179,7 +179,7 @@ pipeline {
                             echo 1. Checking generated code structure...
                             
                             echo    Files in generated code:
-                            dir /b %MODEL_NAME%_ert_rtw\\*.c %MODEL_NAME%_ert_rtw\\*.h
+                            dir /b %MODEL_NAME%_ert_rtw/*.c %MODEL_NAME%_ert_rtw/*.h
                             
                             echo.
                             echo 2. Code generation successful
@@ -208,20 +208,20 @@ pipeline {
                         
                         if exist "%MODEL_NAME%_ert_rtw" (
                             echo [OK] Collecting generated C code...
-                            xcopy /E /I /Y %MODEL_NAME%_ert_rtw artifacts\\%MODEL_NAME%_ert_rtw
+                            xcopy /E /I /Y %MODEL_NAME%_ert_rtw artifacts/%MODEL_NAME%_ert_rtw
                             
-                            echo Generated files: > artifacts\\file_manifest.txt
-                            dir %MODEL_NAME%_ert_rtw >> artifacts\\file_manifest.txt
+                            echo Generated files: > artifacts/file_manifest.txt
+                            dir %MODEL_NAME%_ert_rtw >> artifacts/file_manifest.txt
                         )
                         
                         if exist "test_results" (
                             echo [OK] Collecting test results...
-                            xcopy /E /I /Y test_results artifacts\\test_results
+                            xcopy /E /I /Y test_results artifacts/test_results
                         )
                         
                         if exist "build.log" (
                             echo [OK] Collecting build log...
-                            copy build.log artifacts\\
+                            copy build.log artifacts/
                         )
                         
                         echo.
@@ -251,12 +251,12 @@ pipeline {
                             
                             echo Package: %package_name%
                             
-                            powershell -Command "Compress-Archive -Path '%MODEL_NAME%_ert_rtw\\*' -DestinationPath '%package_name%' -Force"
+                            powershell -Command "Compress-Archive -Path '%MODEL_NAME%_ert_rtw/*' -DestinationPath '%package_name%' -Force"
                             
                             if exist "%package_name%" (
                                 echo [OK] Package created successfully
-                                move %package_name% artifacts\\
-                                dir artifacts\\%package_name%
+                                move %package_name% artifacts/
+                                dir artifacts/%package_name%
                             ) else (
                                 echo [ERROR] Failed to create package
                                 exit /b 1
