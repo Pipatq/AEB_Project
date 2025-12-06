@@ -136,21 +136,6 @@ pipeline {
                 }
             }
         }
-            steps {
-                echo '=================================================='
-                echo '   STAGE 6: Mock ECU Flashing (Deployment)'
-                echo '=================================================='
-                
-                script {
-                    // Simulate flashing firmware to ECU
-                    echo 'Simulating firmware flash to target ECU...'
-                    sleep 2
-                    echo '✓ Firmware flashed successfully (Mock)'
-                    echo '✓ ECU Status: READY'
-                    echo '✓ Deployment completed!'
-                }
-            }
-        }
     }
 
     post {
