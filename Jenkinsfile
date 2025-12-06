@@ -417,19 +417,25 @@ pipeline {
                     echo "Archiving artifacts..."
                     if [ -d "/workspace/artifacts" ]; then
                         ls -lh /workspace/artifacts/
+                        
+                        # Copy artifacts from mounted volume to Jenkins workspace
+                        echo "Copying artifacts to Jenkins workspace..."
+                        cp -r /workspace/artifacts ./
+                        cp /workspace/build.log ./ 2>/dev/null || true
+                        
+                        # Copy test results if they exist
+                        if [ -d "/workspace/test_results" ]; then
+                            cp -r /workspace/test_results ./
+                        fi
                     fi
                 '''
             }
             
-            // Archive all important artifacts
+            // Archive all important artifacts from Jenkins workspace
             archiveArtifacts artifacts: '''
                 build.log,
                 artifacts/**/*,
-                test_results/**/*,
-                **/firmware_*.tar.gz,
-                **/${MODEL_NAME}_ert_rtw/*.c,
-                **/${MODEL_NAME}_ert_rtw/*.h,
-                **/${MODEL_NAME}_ert_rtw/*.mk
+                test_results/**/*
             ''', allowEmptyArchive: true
             
             // Publish test results (if available)
