@@ -15,9 +15,12 @@ classdef ExampleUnitTest < matlab.unittest.TestCase
     methods (TestMethodSetup)
         % Setup for each test
         function setupTest(testCase)
-            % Load parameters
-            if exist('data/brake_params.m', 'file')
-                run('data/brake_params.m');
+            % Load parameters - use absolute path from project root
+            projectRoot = fileparts(fileparts(fileparts(mfilename('fullpath'))));
+            paramFile = fullfile(projectRoot, 'data', 'brake_params.m');
+            
+            if exist(paramFile, 'file')
+                run(paramFile);
                 testCase.testParams = BrakeParams;
             end
         end

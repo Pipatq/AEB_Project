@@ -91,10 +91,9 @@ function exitCode = ci_build()
             mkdir(buildTempDir);
         end
         
-        % Set code generation folder to avoid Unicode path issues
+        % Change to temp directory for build
         fprintf('  - Build directory: %s\n', buildTempDir);
-        set_param(modelName, 'CodeGenFolder', buildTempDir);
-        set_param(modelName, 'CodeGenFolderStructure', 'Separate folder per model');
+        cd(buildTempDir);
         
         % Set code generation parameters
         set_param(modelName, 'SystemTargetFile', 'ert.tlc');
@@ -106,6 +105,9 @@ function exitCode = ci_build()
         fprintf('  - Starting code generation...\n');
         slbuild(modelName);
         fprintf('  - Code generation completed successfully\n');
+        
+        % Change back to original directory
+        cd(originalDir);
         
         % Verify generated files
         codeGenDir = fullfile(buildTempDir, [modelName '_ert_rtw']);
