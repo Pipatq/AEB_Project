@@ -253,23 +253,15 @@ pipeline {
                         if exist "%MODEL_NAME%_ert_rtw" (
                             echo Creating firmware package...
                             
-                            REM Use simple timestamp format
-                            for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value') do set datetime=%%I
-                            set timestamp=%datetime:~0,8%_%datetime:~8,6%
-                            set package_name=firmware_%MODEL_NAME%_%timestamp%.zip
+                            REM Use PowerShell to create package with timestamp
+                            powershell -Command "$timestamp = Get-Date -Format 'yyyyMMdd_HHmmss'; $packageName = 'firmware_%MODEL_NAME%_' + $timestamp + '.zip'; Write-Host \"Package: $packageName\"; Compress-Archive -Path '%MODEL_NAME%_ert_rtw\\*' -DestinationPath $packageName -Force; if (Test-Path $packageName) { Write-Host '[OK] Package created successfully'; Move-Item $packageName artifacts\\ -Force; Get-ChildItem \"artifacts\\*.zip\" | Select-Object Name, Length } else { Write-Host '[ERROR] Failed to create package'; exit 1 }"
                             
-                            echo Package: %package_name%
-                            
-                            powershell -Command "Compress-Archive -Path '%MODEL_NAME%_ert_rtw\\*' -DestinationPath '%package_name%' -Force"
-                            
-                            if exist "%package_name%" (
-                                echo [OK] Package created successfully
-                                move %package_name% artifacts\\
-                                dir "artifacts\\%package_name%"
-                            ) else (
-                                echo [ERROR] Failed to create package
+                            if %ERRORLEVEL% NEQ 0 (
+                                echo [ERROR] Packaging failed
                                 exit /b 1
                             )
+                            
+                            echo [OK] Package created and moved to artifacts
                         ) else (
                             echo [WARNING] No code to package - skipping
                             echo Run build stage to generate code first
