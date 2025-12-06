@@ -63,11 +63,12 @@ function exitCode = ci_test()
                 fprintf('  - JUnit XML report will be saved to: %s\n', xmlFile);
                 
                 % Add coverage plugin with HTML report
-                % Measure coverage for MATLAB source files (not Simulink models)
+                % Measure coverage only for data/ folder (source code called by tests)
+                % Note: scripts/ folder contains CI automation code, not application code
                 coverageReport = matlab.unittest.plugins.codecoverage.CoverageReport(...
                     'test_results/coverage_report', 'MainFile', 'coverage.html');
                 plugin = matlab.unittest.plugins.CodeCoveragePlugin.forFolder(...
-                    {'scripts', 'data'}, 'Producing', coverageReport);
+                    'data', 'Producing', coverageReport);
                 runner.addPlugin(plugin);
                 fprintf('  - Coverage report will be saved to: test_results/coverage_report/\n');
                 
