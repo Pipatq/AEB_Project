@@ -19,9 +19,6 @@ pipeline {
         // Build configuration
         MODEL_NAME = 'AEB_Model'
         BUILD_CONFIG = 'Release'
-        
-        // Email notification (optional)
-        NOTIFY_EMAIL = 'pipatpong3432@gmail.com'
     }
 
     stages {
@@ -405,7 +402,6 @@ pipeline {
                 }
                 
                 echo '⚠ Production deployment completed (mock)'
-                echo '📧 Deployment notification sent to: ${NOTIFY_EMAIL}'
             }
         }
     }
