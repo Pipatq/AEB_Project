@@ -214,7 +214,7 @@ pipeline {
                             echo "2. Checking for common issues..."
                             
                             # Check for TODO/FIXME comments
-                            todos=$(grep -r "TODO\|FIXME" /workspace/${MODEL_NAME}_ert_rtw/*.c 2>/dev/null | wc -l)
+                            todos=$(grep -r "TODO\\|FIXME" /workspace/${MODEL_NAME}_ert_rtw/*.c 2>/dev/null | wc -l)
                             echo "   - TODO/FIXME comments: $todos"
                             
                             echo ""
