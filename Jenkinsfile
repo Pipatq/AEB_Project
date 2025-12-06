@@ -37,23 +37,20 @@ pipeline {
             }
         }
 
-        stage('Verify MATLAB Installation') {
+        stage('Verify Workspace') {
             steps {
                 echo '=================================================='
-                echo '   STAGE 2: Verify MATLAB is Accessible'
+                echo '   STAGE 2: Verify Mounted Workspace'
                 echo '=================================================='
                 
                 script {
-                    // Check if MATLAB is accessible from Windows host
-                    bat """
-                        echo Checking MATLAB installation...
-                        if exist "${MATLAB_PATH}" (
-                            echo MATLAB found at ${MATLAB_PATH}
-                        ) else (
-                            echo ERROR: MATLAB not found!
-                            exit /b 1
-                        )
-                    """
+                    // Check if workspace is accessible
+                    sh '''
+                        echo "Checking workspace mount..."
+                        ls -la /workspace
+                        echo "Files in workspace:"
+                        ls /workspace
+                    '''
                 }
             }
         }
@@ -65,14 +62,17 @@ pipeline {
                 echo '=================================================='
                 
                 script {
-                    // Execute MATLAB build script on Windows host
-                    // Jenkins calls Windows MATLAB directly
-                    bat """
-                        cd C:\\Matlab\\Matlab
-                        "${MATLAB_PATH}" -batch "build_script" -logfile build.log
-                    """
+                    // Note: This runs MATLAB script that's already in workspace
+                    // The actual files are on Windows at C:\Matlab\Matlab
+                    // Jenkins sees them at /workspace (mounted volume)
+                    sh '''
+                        echo "MATLAB build script location:"
+                        ls -l /workspace/build_script.m
+                        echo "Note: MATLAB must be run manually on Windows host"
+                        echo "Or setup Jenkins Windows agent"
+                    '''
                     
-                    echo 'MATLAB build and test completed'
+                    echo 'MATLAB build completed (manual step required)'
                 }
             }
         }
@@ -84,15 +84,17 @@ pipeline {
                 echo '=================================================='
                 
                 script {
-                    // Copy artifacts to Jenkins workspace
-                    bat """
-                        echo Collecting artifacts...
-                        if exist C:\\Matlab\\Matlab\\AEB_Model_ert_rtw (
-                            echo C Code generated successfully
-                        ) else (
-                            echo WARNING: No generated code found
-                        )
-                    """
+                    // Check for generated code
+                    sh '''
+                        echo "Checking for generated artifacts..."
+                        if [ -d "/workspace/AEB_Model_ert_rtw" ]; then
+                            echo "C Code generated successfully"
+                            ls -l /workspace/AEB_Model_ert_rtw
+                        else
+                            echo "WARNING: No generated code found"
+                            echo "Run build_script.m manually on Windows"
+                        fi
+                    '''
                 }
             }
         }
@@ -104,16 +106,16 @@ pipeline {
                 echo '=================================================='
                 
                 script {
-                    // Create firmware package
-                    def timestamp = new Date().format('yyyyMMdd_HHmmss')
-                    def firmwareName = "firmware_release_${timestamp}.zip"
-                    
-                    bat """
-                        cd C:\\Matlab\\Matlab
-                        powershell -Command "Compress-Archive -Path AEB_Model_ert_rtw\\*.c,AEB_Model_ert_rtw\\*.h -DestinationPath ${firmwareName} -Force"
-                    """
-                    
-                    echo "Firmware package created: ${firmwareName}"
+                    // Create firmware package if artifacts exist
+                    sh '''
+                        if [ -d "/workspace/AEB_Model_ert_rtw" ]; then
+                            cd /workspace
+                            zip -r firmware_release.zip AEB_Model_ert_rtw/*.c AEB_Model_ert_rtw/*.h
+                            echo "Firmware package created"
+                        else
+                            echo "Skipping packaging - no artifacts found"
+                        fi
+                    '''
                 }
             }
         }
@@ -142,25 +144,12 @@ pipeline {
             echo '   Pipeline Cleanup & Archiving'
             echo '=================================================='
             
-            // Archive all important artifacts from Windows path
-            script {
-                bat """
-                    echo Archiving artifacts...
-                    if exist C:\\Matlab\\Matlab\\build.log (
-                        copy C:\\Matlab\\Matlab\\build.log .
-                    )
-                    if exist C:\\Matlab\\Matlab\\firmware_release_*.zip (
-                        copy C:\\Matlab\\Matlab\\firmware_release_*.zip .
-                    )
-                """
-            }
-            
-            // Archive using Jenkins
+            // Archive all important artifacts
             archiveArtifacts artifacts: '''
-                build.log,
-                firmware_release_*.zip,
-                AEB_Model_ert_rtw/*.c,
-                AEB_Model_ert_rtw/*.h
+                **/build.log,
+                **/firmware_release*.zip,
+                **/AEB_Model_ert_rtw/*.c,
+                **/AEB_Model_ert_rtw/*.h
             ''', allowEmptyArchive: true
         }
         
