@@ -1,53 +1,108 @@
-# MATLAB Files
-*.asv
-*.m~
-*.slxc
-slprj/
-*.autosave
+# ==============================================================================
+# MATLAB/Simulink Generated Files - DO NOT COMMIT
+# ==============================================================================
 
-# Simulink Generated Files
+# Simulink Cache & Build Artifacts
+slprj/
+*.slxc
+*.autosave
+*.slx.original
+sfprj/
+
+# Code Generation Output
 *_ert_rtw/
 *_grt_rtw/
-*.slxp
-
-# Code Generation
+_codegen/
 codegen/
-html/
 *.mex*
+ert_main.c
+*.tmw
+*.a
+*.o
+*.obj
+*.exe
+*.slxp
 *.p
 
-# Build Artifacts
-build.log
-*.zip
-firmware_release_*.zip
+# MATLAB Temporary Files
+*.asv
+*.m~
+*.mldatx
 
-# Jenkins
+# Model Advisor & Coverage Results
+ModelAdvisorResults/
+slprj/modeladvisor/
+*.coverage
+coverage_results/
+test_results/
+sldv_output/
+
+# Simulink Requirements
+*.slreq.autosave
+
+# Polyspace Results
+*.psresults/
+
+# MATLAB Project Derived Data
+*.prj.derived/
+resources/.SimulinkProject/
+
+# ==============================================================================
+# Build & Deployment Artifacts
+# ==============================================================================
+
+# Firmware Packages
+*.tar.gz
+*.zip
+firmware_release*/
+
+# Build Logs
+build.log
+*.log
+*.tmp
+*.temp
+*.bak
+
+# Temporary Work Directory
+work/
+temp/
+tmp/
+
+# ==============================================================================
+# Jenkins & CI/CD
+# ==============================================================================
 .jenkins/
 workspace/
 
+# ==============================================================================
 # Docker
+# ==============================================================================
 .docker/
 docker-data/
 
-# IDE
+# ==============================================================================
+# IDE & Editor
+# ==============================================================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+*.code-workspace
 
+# ==============================================================================
 # OS Files
+# ==============================================================================
 .DS_Store
 Thumbs.db
 desktop.ini
+.AppleDouble
+.LSOverride
+$RECYCLE.BIN/
 
-# Temporary Files
-*.tmp
-*.temp
-*.bak
-*.log
-
+# ==============================================================================
 # SSH Keys (Security)
+# ==============================================================================
 *.pem
 *.key
 id_rsa*
