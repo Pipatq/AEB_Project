@@ -423,9 +423,14 @@ pipeline {
                         cp -r /workspace/artifacts ./
                         cp /workspace/build.log ./ 2>/dev/null || true
                         
-                        # Copy test results if they exist
+                        # Copy test results if they exist (including all subfolders)
                         if [ -d "/workspace/test_results" ]; then
+                            echo "Copying test_results folder..."
                             cp -r /workspace/test_results ./
+                            echo "Test results copied successfully"
+                            ls -la ./test_results/
+                        else
+                            echo "No test_results folder found in /workspace/"
                         fi
                     fi
                 '''
