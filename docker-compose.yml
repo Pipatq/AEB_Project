@@ -1,0 +1,65 @@
+# version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins_automotive
+    restart: unless-stopped
+    
+    ports:
+      # Jenkins Web UI
+      - "8080:8080"
+      # Jenkins Agent port
+      - "50000:50000"
+    
+    volumes:
+      # Persistent Jenkins data
+      - jenkins_home:/var/jenkins_home
+      
+      # Mount Windows workspace to Jenkins (CRITICAL!)
+      # This allows Jenkins to access MATLAB files on Windows
+      - C:/Matlab/Matlab:/workspace
+      
+      # Optional: Mount MATLAB installation (if needed)
+      # Adjust path to your MATLAB installation
+      # - C:/Program Files/MATLAB/R2025b:/matlab:ro
+    
+    environment:
+      # Java options for Jenkins
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Dhudson.slaves.WorkspaceList=-
+      
+      # Timezone
+      - TZ=Asia/Bangkok
+      
+      # Windows host IP (for accessing Windows from container)
+      - WINDOWS_HOST=host.docker.internal
+    
+    # Allow Jenkins to access Windows host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    
+    networks:
+      - jenkins_network
+
+  # Optional: Add Jenkins agent if needed
+  # jenkins-agent:
+  #   image: jenkins/ssh-agent
+  #   container_name: jenkins_agent
+  #   restart: unless-stopped
+  #   networks:
+  #     - jenkins_network
+  #   environment:
+  #     - JENKINS_AGENT_SSH_PUBKEY=<your-ssh-public-key>
+
+volumes:
+  jenkins_home:
+    driver: local
+    # Optional: Specify custom location
+    # driver_opts:
+    #   type: none
+    #   o: bind
+    #   device: /opt/jenkins_home
+
+networks:
+  jenkins_network:
+    driver: bridge

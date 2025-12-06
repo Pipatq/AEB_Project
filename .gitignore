@@ -1,0 +1,61 @@
+# MATLAB Files
+*.asv
+*.m~
+*.slxc
+slprj/
+*.autosave
+
+# Simulink Generated Files
+*_ert_rtw/
+*_grt_rtw/
+*.slxp
+
+# Code Generation
+codegen/
+html/
+*.mex*
+*.p
+
+# Build Artifacts
+build.log
+*.zip
+firmware_release_*.zip
+
+# Jenkins
+.jenkins/
+workspace/
+
+# Docker
+.docker/
+docker-data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*.log
+
+# SSH Keys (Security)
+*.pem
+*.key
+id_rsa*
+known_hosts
+
+# Helper scripts (not needed in repo)
+fix_model.m
+
+*.md
+
+.gitmessage
